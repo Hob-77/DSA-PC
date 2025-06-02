@@ -1,20 +1,25 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
+#include "Array.h"
 
-template<class Datatype>
-class Array
+class Bitvector
 {
 public:
-	Datatype* m_array;
+	uint32_t * m_array;
 	int m_size;
 
-	Array(int p_size)
+	Bitvector(int p_size)
 	{
-		m_array = new Datatype[p_size];
-		m_size = p_size;
+		m_array = 0;
+		m_size = 0;
+		Resize(p_size);
 	}
 
-	~Array()
+	~Bitvector()
 	{
 		if (m_array != 0)
 		{
@@ -30,12 +35,21 @@ public:
 
 	void Resize(int p_size)
 	{
-		Datatype* newarray = new Datatype[p_size];
-		if (newarray == 0)
+		uint32_t *newvector = 0;
+		if (p_size % 32 == 0)
+		{
+			p_size = p_size / 32;
+		}
+		else
+		{
+			p_size = (p_size / 32) + 1;
+		}
+
+		newvector = new uint32_t[p_size];
+		if (newvector == 0)
 		{
 			return;
 		}
-
 		int min;
 		if (p_size < m_size)
 		{
@@ -48,55 +62,65 @@ public:
 		int index;
 		for (index = 0; index < min; index++)
 		{
-			newarray[index] = m_array[index];
+			newvector[index] = m_array[index];
 		}
 		m_size = p_size;
 		if (m_array != 0)
 		{
 			delete[] m_array;
 		}
-		m_array = newarray;
+		m_array = newvector;
 	}
 
-	Datatype& operator[] (int p_index)
+	bool operator[](int p_index)
 	{
-		return m_array[p_index];
+		int cell = p_index / 32;
+		int bit = p_index % 32;
+		return (m_array[cell] & (1 << bit)) >> bit;
 	}
 
-	operator Datatype* ()
+	void Set(int p_index, bool p_value)
 	{
-		return m_array;
-	}
-
-	void Insert(Datatype p_item, int p_index)
-	{
-		int index;
-		for (index = m_size - 1; index > p_index; index--)
+		int cell = p_index / 32;
+		int bit = p_index % 32;
+		if (p_value == true)
 		{
-			m_array[index] = m_array[index - 1];
+			m_array[cell] = (m_array[cell] | (1 << bit));
 		}
-		m_array[p_index] = p_item;
+		else
+		{
+			m_array[cell] = (m_array[cell] & (~(1 << bit)));
+		}
 	}
 
-	void Remove(int p_index)
+	void ClearAll()
 	{
 		int index;
-		for (index = p_index + 1; index < m_size; index++)
+		for (index = 0; index < m_size; index++)
 		{
-			m_array[index - 1] = m_array[index];
+			m_array[index] = 0;
+		}
+	}
+
+	void SetAll()
+	{
+		int index;
+		for (index = 0; index < m_size; index++)
+		{
+			m_array[index] = 0xFFFFFFFF;
 		}
 	}
 
 	bool WriteFile(const char* p_filename)
 	{
 		FILE* outfile = 0;
-		int written = 0;
+		size_t written = 0;
 		outfile = fopen(p_filename, "wb");
 		if (outfile == 0)
 		{
 			return false;
 		}
-		written = fwrite(m_array, sizeof(Datatype), m_size, outfile);
+		written = fwrite(m_array, sizeof(uint32_t), m_size, outfile);
 		fclose(outfile);
 		if (written != m_size)
 		{
@@ -108,13 +132,13 @@ public:
 	bool ReadFile(const char* p_filename)
 	{
 		FILE* infile = 0;
-		int read = 0;
+		size_t read = 0;
 		infile = fopen(p_filename, "rb");
 		if (infile == 0)
 		{
 			return false;
 		}
-		read = fread(m_array, sizeof(Datatype), m_size, infile);
+		read = fread(m_array, sizeof(uint32_t), m_size, infile);
 		fclose(infile);
 		if (read != m_size)
 		{
@@ -124,61 +148,90 @@ public:
 	}
 };
 
-class Monster
+class Player
 {
 public:
-	int m_x;
-	int m_y;
-	int m_hitpoints;
+	int m_life;
+	int m_money;
+	int m_experience;
+	int m_level;
+
+	unsigned m_state : 2;
+	unsigned m_haskey : 1;
+	int m_hitpoints; 
 };
 
-Array<Monster> g_monsterarray(32);
-int g_monsters = 0;
+Array<Player> g_playerarray(64);
+Bitvector g_modifiedstates(64);
 
-bool AddMonster()
+void GameInit()
 {
-	if (g_monsters == g_monsterarray.Size())
-		g_monsterarray.Resize(g_monsterarray.Size() + 32);
-	g_monsterarray[g_monsters].m_x = rand() % 640;
-	g_monsterarray[g_monsters].m_y = rand() % 480;
-	g_monsterarray[g_monsters].m_hitpoints = 11 + (rand() % 10);
-	g_monsters++;
-	return true;
-}
-
-void RemoveMonster(int p_index)
-{
-	g_monsters--;
-	g_monsterarray[p_index] = g_monsterarray[g_monsters];
-}
-
-void CheckMonsters()
-{
-	int index = 0;
-	while (index < g_monsters)
+	int index;
+	for (index = 0; index < 64; index++)
 	{
-		if (g_monsterarray[index].m_hitpoints <= 0)
+		g_playerarray[index].m_life = 11 + rand() % 10;
+		g_playerarray[index].m_money = rand() % 100;
+		g_playerarray[index].m_experience = 0;
+		g_playerarray[index].m_level = 1 + rand() % 5;
+	}
+	g_modifiedstates.SetAll();
+}
+
+void SetLife(int p_player, int p_life)
+{
+	g_playerarray[p_player].m_life = p_life;
+	g_modifiedstates.Set(p_player, true);
+}
+
+void SetExperience(int p_player, int p_experience)
+{
+	g_playerarray[p_player].m_experience = p_experience;
+	g_modifiedstates.Set(p_player, true);
+}
+
+void SetLevel(int p_player, int p_level)
+{
+	g_playerarray[p_player].m_level = p_level;
+	g_modifiedstates.Set(p_player, true);
+}
+
+bool SavePlayers(const char* p_filename)
+{
+	int index;
+	FILE* savefile = fopen(p_filename, "wb");
+	if (savefile == 0)
+	{
+		return false;
+	}
+	for (index = 0; index < 64; index++)
+	{
+		if (g_modifiedstates[index] == true)
 		{
-			RemoveMonster(index);
-		}
-		else
-		{
-			index++;
+			fseek(savefile, sizeof(Player) * index, SEEK_SET);
+			fwrite(&(g_playerarray[index]), sizeof(Player), 1, savefile);
 		}
 	}
+	g_modifiedstates.ClearAll();
+	return true;
 }
 
 int main()
 {
-	AddMonster();
-	AddMonster();
-	AddMonster();
+	srand(time(0));  // Initialize random seed
 
-	std::cout << "Added " << g_monsters << " monsters\n";
+	std::cout << "Initializing game...\n";
+	GameInit();
 
-	g_monsterarray[0].m_hitpoints = 0;
+	std::cout << "Player 0: Life=" << g_playerarray[0].m_life
+		<< ", Money=" << g_playerarray[0].m_money << "\n";
 
-	CheckMonsters();
+	std::cout << "Player 0 modified: " << g_modifiedstates[0] << "\n\n";
 
-	std::cout << "After cleanup: " << g_monsters << " monsters\n";
+	SetLife(0, 100);
+	std::cout << "Changed Player 0 life to 100\n";
+	std::cout << "Player 0 modified: " << g_modifiedstates[0] << "\n";
+
+	return 0;
+
+
 }
