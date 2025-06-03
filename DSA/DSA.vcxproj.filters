@@ -23,5 +23,49 @@
     <ClInclude Include="Array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Bitvector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SDL3.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bmp\grass1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\grass2.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\grass3.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\grass4.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\roadbottomleft.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\roadbottomright.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\roadh.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\roadtopleft.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\roadtopright.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\roadv.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\snow1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp\snow2.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

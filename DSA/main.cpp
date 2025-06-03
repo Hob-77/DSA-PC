@@ -4,259 +4,184 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#include <SDL3/SDL.h>
 #include "Array.h"
 #include "Bitvector.h"
 
-template<class Datatype>
-class Array2D
+const int WINDOWWIDTH{ 1280 };
+const int WINDOWHEIGHT{ 720 };
+
+const int MAPWIDTH = 16;
+const int MAPHEIGHT = 16;
+const int TILES = 12;
+const int TILESIZE = 64;
+
+// 2D array for the map
+Array2D<int> g_tilemap(MAPWIDTH, MAPHEIGHT);
+
+// Array of tile textures 
+SDL_Texture* g_tiles[TILES];
+
+void DrawTilemap(SDL_Renderer* renderer, int p_x, int p_y)
 {
-public:
-	Datatype* m_array;
-	int m_width;
-	int m_height;
+	int bx = p_x;
+	int by = p_y;
 
-	Array2D(int p_width, int p_height)
+	for (int y = 0; y < MAPHEIGHT; y++)
 	{
-		m_array = new Datatype[p_width * p_height];
-		m_width = p_width;
-		m_height = p_height;
-	}
-
-	~Array2D()
-	{
-		if (m_array != 0)
+		for (int x = 0; x < MAPWIDTH; x++)
 		{
-			delete[] m_array;
+			SDL_FRect dst = {
+				(float)bx,
+				(float)by,
+				(float)TILESIZE,
+				(float)TILESIZE
+			};
+
+			SDL_RenderTexture(renderer, g_tiles[g_tilemap.Get(x, y)], nullptr, &dst);
+			bx += TILESIZE;
 		}
-		m_array = 0;
+		bx = p_x;
+		by += TILESIZE;
 	}
+}
 
-	Datatype& Get(int p_x, int p_y)
-	{
-		return m_array[p_y * m_width + p_x];
-	}
 
-	void Resize(int p_width, int p_height)
-	{
-		Datatype* newarray = new Datatype[p_width * p_height];
-		if (newarray == 0)
-		{
-			return;
-		}
-		int x, y, t1, t2;
-		int minx = (p_width < m_width ? p_width : m_width);
-		int miny = (p_height < m_height ? p_height : m_height);
-		for (y = 0; y < miny; y++)
-		{
-			t1 = y * p_width;
-			t2 = y * m_width;
-			for (x = 0; x < minx; x++)
-			{
-				newarray[t1 + x] = m_array[t2 + x];
-			}
-		}
-		if (m_array != 0)
-		{
-			delete[] m_array;
-		}
-		m_array = newarray;
-		m_width = p_width;
-		m_height = p_height;
-	}
 
-	int Width()
-	{
-		return m_width;
-	}
-
-	int Height()
-	{
-		return m_height;
-	}
-
-	int Size()
-	{
-		return m_width * m_height;
-	}
-};
-
-template<class Datatype>
-class Array3D
+int main(int argc, char* argv[])
 {
-public:
-	
-	// constructor
-	Array3D(int p_width, int p_height, int p_depth)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 	{
-		m_array = new Datatype[p_width * p_height * p_depth];
-		m_width = p_width;
-		m_height = p_height;
-		m_depth = p_depth;
+		std::cerr << "Failed to init SDL: " << SDL_GetError() << "\n";
+		return -1;
 	}
 
-	// destructor
-	~Array3D()
+	SDL_Window* window = SDL_CreateWindow(
+		"DSA",
+		WINDOWWIDTH,
+		WINDOWHEIGHT,
+		SDL_WINDOW_RESIZABLE
+	);
+
+	if (!window)
 	{
-		if (m_array != 0)
-		{
-			delete[] m_array;
-		}
-		m_array = 0;
+		std::cout << "Window could not be created! SDL_ERROR: " << SDL_GetError() << "\n";
+		SDL_Quit();
+		return -1;
 	}
 
-	Datatype& Get(int p_x, int p_y, int p_z)
+	// Create renderer
+	SDL_Renderer* renderer = SDL_CreateRenderer(window,NULL);
+	// Enable vsync
+	SDL_SetRenderVSync(renderer, 1);
+
+	SDL_Surface* temp;
+
+	temp = SDL_LoadBMP("bmp/grass1.bmp");
+	g_tiles[0] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/grass2.bmp");
+	g_tiles[1] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/grass3.bmp");
+	g_tiles[2] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/grass4.bmp");
+	g_tiles[3] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadh.bmp");
+	g_tiles[4] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadv.bmp");
+	g_tiles[5] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadtopleft.bmp");
+	g_tiles[6] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadtopright.bmp");
+	g_tiles[7] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadbottomleft.bmp");
+	g_tiles[8] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadbottomright.bmp");
+	g_tiles[9] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/snow1.bmp");
+	g_tiles[10] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/snow2.bmp");
+	g_tiles[11] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	// "grass and snow"
+	for (int y = 0; y < MAPHEIGHT; y++)
 	{
-		return m_array[(p_z * m_width * m_height) + (p_y * m_width) + p_x];
+		for (int x = 0; x < (MAPWIDTH / 2); x++)
+		{
+			g_tilemap.Get(x, y) = rand() % 4;
+			g_tilemap.Get(x + (MAPWIDTH / 2), y) = (rand() % 2) + 10;
+		}
 	}
 
-	void Resize(int p_width, int p_height, int p_depth)
+	for (int x = 4; x < 10; x++)
 	{
-		// create a new array
-		Datatype* newarray = new Datatype[p_width * p_height * p_depth];
-		if (newarray == 0)
+		g_tilemap.Get(x, 2) = 4;
+		g_tilemap.Get(x, 6) = 4;
+	}
+	for (int y = 3; y < 7; y ++ )
+	{
+		g_tilemap.Get(4, y) = 5;
+		g_tilemap.Get(9, y) = 5;
+	}
+	g_tilemap.Get(4, 2) = 6;
+	g_tilemap.Get(9, 2) = 7;
+	g_tilemap.Get(4, 6) = 8;
+	g_tilemap.Get(9, 6) = 9;
+
+	bool quit = false;
+	SDL_Event event;
+
+	while (!quit)
+	{
+		while (SDL_PollEvent(&event))
 		{
-			return;
-		}
-		// create the three coordinate variables and the four temp
-		// variables
-		int x, y, z, t1, t2, t3, t4;
-		// determine the minimum of all dimensions.
-		int minx = (p_width < m_width ? p_width : m_width);
-		int miny = (p_height < m_height ? p_height : m_height);
-		int minz = (p_depth < m_depth ? p_depth : m_depth);
-		// loop through each cell and copy everything over
-		for (z = 0; z < minz; z++)
-		{
-			// precalculate the outer term (z) of the access algorithm
-			t1 = z * p_width * p_height;
-			t2 = z * m_width * m_height;
-		}
-		for (y = 0; y < miny; y++)
-		{
-			// precalculate the middle term (y) of the access algorithm
-			t3 = y * p_width;
-			t4 = y * m_width;
-			for (x = 0; x < minx; x++)
+			if (event.type == SDL_EVENT_QUIT)
 			{
-				// move the data to the new array
-				newarray[t1 + t3 + x] = m_array[t2 + t4 + x];
+				quit = true;
 			}
-		}
-		// delete the old array
-		if (m_array != 0)
-		{
-			delete[] m_array;
-		}
-		// set the new array, and the width, height, and depth
-		m_array = newarray;
-		m_width = p_width;
-		m_height = p_height;
-		m_depth = p_depth;
-	}
-
-		int Size()
-		{
-			return m_width * m_height * m_depth;
-		}
-
-		int Width()
-		{
-			return m_width;
-		}
-
-		int Height()
-		{
-			return m_height;
-		}
-
-		int Depth()
-		{
-			return m_depth;
-		}
-
-	private:
-		Datatype* m_array;
-		int m_width;
-		int m_height;
-		int m_depth;
-};
-
-
-int main()
-{
-	std::cout << "===Intializing arrays===" << "\n";
-
-	// declare the arrays.
-	Array3D<int> iarray(2, 5, 3);
-	Array3D<float> farray(3, 4, 5);
-	int i, x, y, z;
-	float f;
-
-	std::cout << "The size of int array: " << iarray.Size() << "\n";
-	std::cout << "The size of float array: " << farray.Size() << "\n";
-
-	std::cout << "Setting cells" << "\n";
-	// set a few cells
-	iarray.Get(1, 4, 0) = 10;
-	farray.Get(3, 2, 3) = 0.5f;
-
-	std::cout << "Retrieving cells" << "\n";
-	// retrieve the cells that we just set.
-	i = iarray.Get(1, 4, 0);
-	f = farray.Get(3, 2, 3);
-
-	std::cout << "Getting the size of each array" << "\n";
-	// get the size of each array.
-	i = iarray.Size();
-	i = farray.Size();
-
-	std::cout << "Filling array with consectuive numbers" << "\n";
-	// fill the integer array with consectuive numbers
-	for (z = 0; z < 3; z++)
-	{
-		for (y = 0; y < 5; y++)
-		{
-			for (x = 0; x < 2; x++)
+			if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
 			{
-				iarray.Get(x, y, z) = (z * 2 * 5) + (y * 2) + x;
+				quit = true;
 			}
+
+
 		}
+
+		// Render stuff
+
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 250); // Clear to black
+		SDL_RenderClear(renderer);
+
+		DrawTilemap(renderer, 0, 0);
+
+		SDL_RenderPresent(renderer);
+
 	}
 
-	std::cout << "Printing contents of integer array" << "\n";
+	SDL_DestroyWindow(window);
+	SDL_Quit();
 
-	for (z = 0; z < iarray.Depth(); z++)
-	{
-		std::cout << "Layer " << z << ":\n";
-		std::cout << "--------\n";
-
-		for (y = 0; y < iarray.Height(); y++)
-		{
-			for (x = 0; x < iarray.Width(); x++)
-			{
-				std::cout << iarray.Get(x, y, z);
-			}
-			std::cout << "\n";
-		}
-		std::cout << "\n";
-	}
-
-	std::cout << "Resizing arrays: " << "\n";
-
-	// resize the array to make it larger:
-	iarray.Resize(3, 6, 4);
-	std::cout << "Made integer array bigger: " << iarray.Size() << "\n";
-	// resize the array to make it smaller:
-	iarray.Resize(2, 2, 2);
-	std::cout << "Made integer array smaller: " << iarray.Size() << "\n";
-
-	farray.Resize(10, 10, 10);
-	std::cout << "Made float array huge: " << farray.Size() << "\n";
-
-	farray.Resize(2, 3, 4);
-	std::cout << "Made float array small:" << farray.Size() << "\n";
-
-	iarray.~Array3D();
-	farray.~Array3D();
-
+	return 0;
 }

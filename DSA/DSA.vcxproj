@@ -104,10 +104,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\SDL3-3.2.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\SDL3-3.2.14\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -118,12 +121,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\SDL3-3.2.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\SDL3-3.2.14\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -132,6 +138,23 @@
   <ItemGroup>
     <ClInclude Include="Array.h" />
     <ClInclude Include="Bitvector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SDL3.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bmp\grass1.bmp" />
+    <Image Include="bmp\grass2.bmp" />
+    <Image Include="bmp\grass3.bmp" />
+    <Image Include="bmp\grass4.bmp" />
+    <Image Include="bmp\roadbottomleft.bmp" />
+    <Image Include="bmp\roadbottomright.bmp" />
+    <Image Include="bmp\roadh.bmp" />
+    <Image Include="bmp\roadtopleft.bmp" />
+    <Image Include="bmp\roadtopright.bmp" />
+    <Image Include="bmp\roadv.bmp" />
+    <Image Include="bmp\snow1.bmp" />
+    <Image Include="bmp\snow2.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
