@@ -5,233 +5,218 @@
 #include <cstdlib>
 #include <ctime>
 #include "Array.h"
+#include "Bitvector.h"
 
-class Bitvector
+template<class Datatype>
+class Array2D
 {
 public:
-	uint32_t * m_array;
-	int m_size;
+	Datatype* m_array;
+	int m_width;
+	int m_height;
 
-	Bitvector(int p_size)
+	Array2D(int p_width, int p_height)
 	{
-		m_array = 0;
-		m_size = 0;
-		Resize(p_size);
+		m_array = new Datatype[p_width * p_height];
+		m_width = p_width;
+		m_height = p_height;
 	}
 
-	~Bitvector()
+	~Array2D()
 	{
 		if (m_array != 0)
 		{
 			delete[] m_array;
 		}
 		m_array = 0;
+	}
+
+	Datatype& Get(int p_x, int p_y)
+	{
+		return m_array[p_y * m_width + p_x];
+	}
+
+	void Resize(int p_width, int p_height)
+	{
+		Datatype* newarray = new Datatype[p_width * p_height];
+		if (newarray == 0)
+		{
+			return;
+		}
+		int x, y, t1, t2;
+		int minx = (p_width < m_width ? p_width : m_width);
+		int miny = (p_height < m_height ? p_height : m_height);
+		for (y = 0; y < miny; y++)
+		{
+			t1 = y * p_width;
+			t2 = y * m_width;
+			for (x = 0; x < minx; x++)
+			{
+				newarray[t1 + x] = m_array[t2 + x];
+			}
+		}
+		if (m_array != 0)
+		{
+			delete[] m_array;
+		}
+		m_array = newarray;
+		m_width = p_width;
+		m_height = p_height;
+	}
+
+	int Width()
+	{
+		return m_width;
+	}
+
+	int Height()
+	{
+		return m_height;
 	}
 
 	int Size()
 	{
-		return m_size;
+		return m_width * m_height;
+	}
+};
+
+template<class Datatype>
+class Array3D
+{
+public:
+	
+	// constructor
+	Array3D(int p_width, int p_height, int p_depth)
+	{
+		m_array = new Datatype[p_width * p_height * p_depth];
+		m_width = p_width;
+		m_height = p_height;
+		m_depth = p_depth;
 	}
 
-	void Resize(int p_size)
+	// destructor
+	~Array3D()
 	{
-		uint32_t *newvector = 0;
-		if (p_size % 32 == 0)
-		{
-			p_size = p_size / 32;
-		}
-		else
-		{
-			p_size = (p_size / 32) + 1;
-		}
-
-		newvector = new uint32_t[p_size];
-		if (newvector == 0)
-		{
-			return;
-		}
-		int min;
-		if (p_size < m_size)
-		{
-			min = p_size;
-		}
-		else
-		{
-			min = m_size;
-		}
-		int index;
-		for (index = 0; index < min; index++)
-		{
-			newvector[index] = m_array[index];
-		}
-		m_size = p_size;
 		if (m_array != 0)
 		{
 			delete[] m_array;
 		}
-		m_array = newvector;
+		m_array = 0;
 	}
 
-	bool operator[](int p_index)
+	Datatype& Get(int p_x, int p_y, int p_z)
 	{
-		int cell = p_index / 32;
-		int bit = p_index % 32;
-		return (m_array[cell] & (1 << bit)) >> bit;
+		return m_array[(p_z * m_width * m_height) + (p_y * m_width) + p_x];
 	}
 
-	void Set(int p_index, bool p_value)
+	void Resize(int p_width, int p_height, int p_depth)
 	{
-		int cell = p_index / 32;
-		int bit = p_index % 32;
-		if (p_value == true)
+		// create a new array
+		Datatype* newarray = new Datatype[p_width * p_height * p_depth];
+		if (newarray == 0)
 		{
-			m_array[cell] = (m_array[cell] | (1 << bit));
+			return;
 		}
-		else
+		// create the three coordinate variables and the four temp
+		// variables
+		int x, y, z, t1, t2, t3, t4;
+		// determine the minimum of all dimensions.
+		int minx = (p_width < m_width ? p_width : m_width);
+		int miny = (p_height < m_height ? p_height : m_height);
+		int minz = (p_depth < m_depth ? p_depth : m_depth);
+		// loop through each cell and copy everything over
+		for (z = 0; z < minz; z++)
 		{
-			m_array[cell] = (m_array[cell] & (~(1 << bit)));
+			// precalculate the outer term (z) of the access algorithm
+			t1 = z * p_width * p_height;
+			t2 = z * m_width * m_height;
 		}
+		for (y = 0; y < miny; y++)
+		{
+			// precalculate the middle term (y) of the access algorithm
+			t3 = y * p_width;
+			t4 = y * m_width;
+			for (x = 0; x < minx; x++)
+			{
+				// move the data to the new array
+				newarray[t1 + t3 + x] = m_array[t2 + t4 + x];
+			}
+		}
+		// delete the old array
+		if (m_array != 0)
+		{
+			delete[] m_array;
+		}
+		// set the new array, and the width, height, and depth
+		m_array = newarray;
+		m_width = p_width;
+		m_height = p_height;
+		m_depth = p_depth;
 	}
 
-	void ClearAll()
-	{
-		int index;
-		for (index = 0; index < m_size; index++)
+		int Size()
 		{
-			m_array[index] = 0;
+			return m_width * m_height * m_depth;
 		}
-	}
 
-	void SetAll()
-	{
-		int index;
-		for (index = 0; index < m_size; index++)
+		int Width()
 		{
-			m_array[index] = 0xFFFFFFFF;
+			return m_width;
 		}
-	}
 
-	bool WriteFile(const char* p_filename)
-	{
-		FILE* outfile = 0;
-		size_t written = 0;
-		outfile = fopen(p_filename, "wb");
-		if (outfile == 0)
+		int Height()
 		{
-			return false;
+			return m_height;
 		}
-		written = fwrite(m_array, sizeof(uint32_t), m_size, outfile);
-		fclose(outfile);
-		if (written != m_size)
-		{
-			return false;
-		}
-		return true;
-	}
 
-	bool ReadFile(const char* p_filename)
-	{
-		FILE* infile = 0;
-		size_t read = 0;
-		infile = fopen(p_filename, "rb");
-		if (infile == 0)
+		int Depth()
 		{
-			return false;
+			return m_depth;
 		}
-		read = fread(m_array, sizeof(uint32_t), m_size, infile);
-		fclose(infile);
-		if (read != m_size)
-		{
-			return false;
-		}
-		return true;
-	}
+
+	private:
+		Datatype* m_array;
+		int m_width;
+		int m_height;
+		int m_depth;
 };
 
-class Player
-{
-public:
-	int m_life;
-	int m_money;
-	int m_experience;
-	int m_level;
-
-	unsigned m_state : 2;
-	unsigned m_haskey : 1;
-	int m_hitpoints; 
-};
-
-Array<Player> g_playerarray(64);
-Bitvector g_modifiedstates(64);
-
-void GameInit()
-{
-	int index;
-	for (index = 0; index < 64; index++)
-	{
-		g_playerarray[index].m_life = 11 + rand() % 10;
-		g_playerarray[index].m_money = rand() % 100;
-		g_playerarray[index].m_experience = 0;
-		g_playerarray[index].m_level = 1 + rand() % 5;
-	}
-	g_modifiedstates.SetAll();
-}
-
-void SetLife(int p_player, int p_life)
-{
-	g_playerarray[p_player].m_life = p_life;
-	g_modifiedstates.Set(p_player, true);
-}
-
-void SetExperience(int p_player, int p_experience)
-{
-	g_playerarray[p_player].m_experience = p_experience;
-	g_modifiedstates.Set(p_player, true);
-}
-
-void SetLevel(int p_player, int p_level)
-{
-	g_playerarray[p_player].m_level = p_level;
-	g_modifiedstates.Set(p_player, true);
-}
-
-bool SavePlayers(const char* p_filename)
-{
-	int index;
-	FILE* savefile = fopen(p_filename, "wb");
-	if (savefile == 0)
-	{
-		return false;
-	}
-	for (index = 0; index < 64; index++)
-	{
-		if (g_modifiedstates[index] == true)
-		{
-			fseek(savefile, sizeof(Player) * index, SEEK_SET);
-			fwrite(&(g_playerarray[index]), sizeof(Player), 1, savefile);
-		}
-	}
-	g_modifiedstates.ClearAll();
-	return true;
-}
 
 int main()
 {
-	srand(time(0));  // Initialize random seed
+	// declare the arrays.
+	Array2D<int> iarray(5, 5);
+	Array2D<float> farray(4, 4);
 
-	std::cout << "Initializing game...\n";
-	GameInit();
+	int i, x, y;
+	float f;
+	// We cannot do this with the Array2D class:
+	// iarray[4][4] = 10
+	// do this instead:
+	iarray.Get(4, 4) = 10;
+	//set a cell in farray.
+	farray.Get(3, 2) = 0.5f;
+	// retrieve the cells that we just set.
+	i = iarray.Get(4, 4);
+	f = farray.Get(3, 2);
+	// get the size of each array.
+	i = iarray.Size();
+	i = farray.Size();
+	// fill integer array with consecutive numbers
+	for (y = 0; y < 5; y++)
+	{
+		for (x = 0; x < 5; x++)
+		{
+			iarray.Get(x, y) = y * 5 + x;
+		}
+	}
 
-	std::cout << "Player 0: Life=" << g_playerarray[0].m_life
-		<< ", Money=" << g_playerarray[0].m_money << "\n";
+	//resize teh array to make it larger:
+	iarray.Resize(6, 6);
+	// resize the array to make it smaller:
+	iarray.Resize(3, 3);
 
-	std::cout << "Player 0 modified: " << g_modifiedstates[0] << "\n\n";
-
-	SetLife(0, 100);
-	std::cout << "Changed Player 0 life to 100\n";
-	std::cout << "Player 0 modified: " << g_modifiedstates[0] << "\n";
-
-	return 0;
-
+	std::cout << iarray.Size() << "\n";
+	std::cout << farray.Size() << "\n";
 
 }
