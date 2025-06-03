@@ -184,39 +184,79 @@ public:
 
 int main()
 {
-	// declare the arrays.
-	Array2D<int> iarray(5, 5);
-	Array2D<float> farray(4, 4);
+	std::cout << "===Intializing arrays===" << "\n";
 
-	int i, x, y;
+	// declare the arrays.
+	Array3D<int> iarray(2, 5, 3);
+	Array3D<float> farray(3, 4, 5);
+	int i, x, y, z;
 	float f;
-	// We cannot do this with the Array2D class:
-	// iarray[4][4] = 10
-	// do this instead:
-	iarray.Get(4, 4) = 10;
-	//set a cell in farray.
-	farray.Get(3, 2) = 0.5f;
+
+	std::cout << "The size of int array: " << iarray.Size() << "\n";
+	std::cout << "The size of float array: " << farray.Size() << "\n";
+
+	std::cout << "Setting cells" << "\n";
+	// set a few cells
+	iarray.Get(1, 4, 0) = 10;
+	farray.Get(3, 2, 3) = 0.5f;
+
+	std::cout << "Retrieving cells" << "\n";
 	// retrieve the cells that we just set.
-	i = iarray.Get(4, 4);
-	f = farray.Get(3, 2);
+	i = iarray.Get(1, 4, 0);
+	f = farray.Get(3, 2, 3);
+
+	std::cout << "Getting the size of each array" << "\n";
 	// get the size of each array.
 	i = iarray.Size();
 	i = farray.Size();
-	// fill integer array with consecutive numbers
-	for (y = 0; y < 5; y++)
+
+	std::cout << "Filling array with consectuive numbers" << "\n";
+	// fill the integer array with consectuive numbers
+	for (z = 0; z < 3; z++)
 	{
-		for (x = 0; x < 5; x++)
+		for (y = 0; y < 5; y++)
 		{
-			iarray.Get(x, y) = y * 5 + x;
+			for (x = 0; x < 2; x++)
+			{
+				iarray.Get(x, y, z) = (z * 2 * 5) + (y * 2) + x;
+			}
 		}
 	}
 
-	//resize teh array to make it larger:
-	iarray.Resize(6, 6);
-	// resize the array to make it smaller:
-	iarray.Resize(3, 3);
+	std::cout << "Printing contents of integer array" << "\n";
 
-	std::cout << iarray.Size() << "\n";
-	std::cout << farray.Size() << "\n";
+	for (z = 0; z < iarray.Depth(); z++)
+	{
+		std::cout << "Layer " << z << ":\n";
+		std::cout << "--------\n";
+
+		for (y = 0; y < iarray.Height(); y++)
+		{
+			for (x = 0; x < iarray.Width(); x++)
+			{
+				std::cout << iarray.Get(x, y, z);
+			}
+			std::cout << "\n";
+		}
+		std::cout << "\n";
+	}
+
+	std::cout << "Resizing arrays: " << "\n";
+
+	// resize the array to make it larger:
+	iarray.Resize(3, 6, 4);
+	std::cout << "Made integer array bigger: " << iarray.Size() << "\n";
+	// resize the array to make it smaller:
+	iarray.Resize(2, 2, 2);
+	std::cout << "Made integer array smaller: " << iarray.Size() << "\n";
+
+	farray.Resize(10, 10, 10);
+	std::cout << "Made float array huge: " << farray.Size() << "\n";
+
+	farray.Resize(2, 3, 4);
+	std::cout << "Made float array small:" << farray.Size() << "\n";
+
+	iarray.~Array3D();
+	farray.~Array3D();
 
 }
