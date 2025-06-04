@@ -8,8 +8,8 @@
 #include "Array.h"
 #include "Bitvector.h"
 
-const int WINDOWWIDTH{ 1280 };
-const int WINDOWHEIGHT{ 720 };
+const int WINDOWWIDTH{ 1024 };
+const int WINDOWHEIGHT{ 768 };
 
 const int MAPWIDTH = 16;
 const int MAPHEIGHT = 16;
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 			g_tilemap.Get(x + (MAPWIDTH / 2), y) = (rand() % 2) + 10;
 		}
 	}
-
+	// Bridge
 	for (int x = 4; x < 10; x++)
 	{
 		g_tilemap.Get(x, 2) = 4;
