@@ -1,184 +1,225 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include "Array.h"
+#include "Bitvector.h"
+
+#include <SDL3/SDL.h>
+
 #include <iostream>
 #include <algorithm>
+#include <ctime>
 
-template<class Datatype>
-class Array
+const int WINDOWWIDTH{ 1280 };
+const int WINDOWHEIGHT{ 720 };
+
+const int MAPWIDTH = 16;
+const int MAPHEIGHT = 16;
+const int TILES = 12;
+const int TILESIZE = 64;
+const int LAYERS = 2;
+
+/*
+// 2D array for the map
+Array2D<int> g_tilemap(MAPWIDTH, MAPHEIGHT);
+*/
+
+// 3D array for the map
+Array3D<int> g_tilemap(MAPWIDTH, MAPHEIGHT, LAYERS);
+
+// Array of tile textures 
+SDL_Texture* g_tiles[TILES];
+
+void DrawTilemap(SDL_Renderer* renderer, int p_x, int p_y)
 {
-public:
-	Datatype* m_array;
-	int m_size;
-
-	Array(int p_size)
+	// Assuming you have const int LAYERS defined
+	for (int z = 0; z < LAYERS; z++)
 	{
-		m_array = new Datatype[p_size];
-		m_size = p_size;
-	}
+		int bx = p_x;
+		int by = p_y;
 
-	~Array()
-	{
-		if (m_array != 0)
+		for (int y = 0; y < MAPHEIGHT; y++)
 		{
-			delete[] m_array;
-		}
-		m_array = 0;
-	}
+			for (int x = 0; x < MAPWIDTH; x++)
+			{
+				int tileIndex = g_tilemap.Get(x, y, z);
 
-	int Size()
-	{
-		return m_size;
-	}
-
-	void Resize(int p_size)
-	{
-		Datatype* newarray = new Datatype[p_size];
-		if (newarray == 0)
-		{
-			return;
-		}
-
-		int min;
-		if (p_size < m_size)
-		{
-			min = p_size;
-		}
-		else
-		{
-			min = m_size;
-		}
-		int index;
-		for (index = 0; index < min; index++)
-		{
-			newarray[index] = m_array[index];
-		}
-		m_size = p_size;
-		if (m_array != 0)
-		{
-			delete[] m_array;
-		}
-		m_array = newarray;
-	}
-
-	Datatype& operator[] (int p_index)
-	{
-		return m_array[p_index];
-	}
-
-	operator Datatype* ()
-	{
-		return m_array;
-	}
-
-	void Insert(Datatype p_item, int p_index)
-	{
-		int index;
-		for (index = m_size - 1; index > p_index; index--)
-		{
-			m_array[index] = m_array[index - 1];
-		}
-		m_array[p_index] = p_item;
-	}
-
-	void Remove(int p_index)
-	{
-		int index;
-		for (index = p_index + 1; index < m_size; index++)
-		{
-			m_array[index - 1] = m_array[index];
-		}
-	}
-
-	bool WriteFile(const char* p_filename)
-	{
-		FILE* outfile = 0;
-		int written = 0;
-		outfile = fopen(p_filename, "wb");
-		if (outfile == 0)
-		{
-			return false;
-		}
-		written = fwrite(m_array, sizeof(Datatype), m_size, outfile);
-		fclose(outfile);
-		if (written != m_size)
-		{
-			return false;
-		}
-		return true;
-	}
-
-	bool ReadFile(const char* p_filename)
-	{
-		FILE* infile = 0;
-		int read = 0;
-		infile = fopen(p_filename, "rb");
-		if (infile == 0)
-		{
-			return false;
-		}
-		read = fread(m_array, sizeof(Datatype), m_size, infile);
-		fclose(infile);
-		if (read != m_size)
-		{
-			return false;
-		}
-		return true;
-	}
-};
-
-class Monster
-{
-public:
-	int m_x;
-	int m_y;
-	int m_hitpoints;
-};
-
-Array<Monster> g_monsterarray(32);
-int g_monsters = 0;
-
-bool AddMonster()
-{
-	if (g_monsters == g_monsterarray.Size())
-		g_monsterarray.Resize(g_monsterarray.Size() + 32);
-	g_monsterarray[g_monsters].m_x = rand() % 640;
-	g_monsterarray[g_monsters].m_y = rand() % 480;
-	g_monsterarray[g_monsters].m_hitpoints = 11 + (rand() % 10);
-	g_monsters++;
-	return true;
-}
-
-void RemoveMonster(int p_index)
-{
-	g_monsters--;
-	g_monsterarray[p_index] = g_monsterarray[g_monsters];
-}
-
-void CheckMonsters()
-{
-	int index = 0;
-	while (index < g_monsters)
-	{
-		if (g_monsterarray[index].m_hitpoints <= 0)
-		{
-			RemoveMonster(index);
-		}
-		else
-		{
-			index++;
+				
+				if (tileIndex >= 0 && tileIndex < TILES)
+				{
+					SDL_FRect dst = {
+						(float)bx,
+						(float)by,
+						(float)TILESIZE,
+						(float)TILESIZE
+					};
+					SDL_RenderTexture(renderer, g_tiles[tileIndex], nullptr, &dst);
+				}
+				bx += TILESIZE;
+			}
+			bx = p_x;
+			by += TILESIZE;
 		}
 	}
 }
 
-int main()
+
+
+int main(int argc, char* argv[])
 {
-	AddMonster();
-	AddMonster();
-	AddMonster();
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+	{
+		std::cerr << "Failed to init SDL: " << SDL_GetError() << "\n";
+		return -1;
+	}
 
-	std::cout << "Added " << g_monsters << " monsters\n";
+	SDL_Window* window = SDL_CreateWindow(
+		"DSA",
+		WINDOWWIDTH,
+		WINDOWHEIGHT,
+		SDL_WINDOW_RESIZABLE
+	);
 
-	g_monsterarray[0].m_hitpoints = 0;
+	if (!window)
+	{
+		std::cout << "Window could not be created! SDL_ERROR: " << SDL_GetError() << "\n";
+		SDL_Quit();
+		return -1;
+	}
 
-	CheckMonsters();
+	// Create renderer
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
+	// Enable vsync
+	SDL_SetRenderVSync(renderer, 1);
 
-	std::cout << "After cleanup: " << g_monsters << " monsters\n";
+	SDL_Surface* temp;
+
+	temp = SDL_LoadBMP("bmp/grass1.bmp");
+	g_tiles[0] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/grass2.bmp");
+	g_tiles[1] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/grass3.bmp");
+	g_tiles[2] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/grass4.bmp");
+	g_tiles[3] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadh.bmp");
+	g_tiles[4] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadv.bmp");
+	g_tiles[5] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadtopleft.bmp");
+	g_tiles[6] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadtopright.bmp");
+	g_tiles[7] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadbottomleft.bmp");
+	g_tiles[8] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/roadbottomright.bmp");
+	g_tiles[9] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/snow1.bmp");
+	g_tiles[10] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	temp = SDL_LoadBMP("bmp/snow2.bmp");
+	g_tiles[11] = SDL_CreateTextureFromSurface(renderer, temp);
+	SDL_DestroySurface(temp);
+
+	// "grass and snow"
+	for (int y = 0; y < MAPHEIGHT; y++)
+	{
+		for (int x = 0; x < (MAPWIDTH / 2); x++)
+		{
+			g_tilemap.Get(x, y,0) = rand() % 4;
+			g_tilemap.Get(x + (MAPWIDTH / 2), y,0) = (rand() % 2) + 10;
+		}
+	}
+
+	// "Bridge"
+	for (int x = 4; x < 10; x++)
+	{
+		g_tilemap.Get(x, 2,0) = 4;
+		g_tilemap.Get(x, 6,0) = 4;
+	}
+	for (int y = 3; y < 7; y++)
+	{
+		g_tilemap.Get(4, y,0) = 5;
+		g_tilemap.Get(9, y,0) = 5;
+	}
+	g_tilemap.Get(4, 2,0) = 6;
+	g_tilemap.Get(9, 2,0) = 7;
+	g_tilemap.Get(4, 6,0) = 8;
+	g_tilemap.Get(9, 6,0) = 9;
+
+	// Create another road
+	for (int x = 0; x < (MAPWIDTH / 2); x++)
+	{
+		g_tilemap.Get(x, 8, 0) = 4;
+	}
+	// clear the second layer
+	for (int y = 0; y < MAPHEIGHT; y++)
+	{
+		for (int x = 0; x < MAPWIDTH; x++)
+		{
+			g_tilemap.Get(x, y, 1) = -1;
+		}
+	}
+	// add the transparent snow tiles over the grass.
+	for (int y = 0; y < MAPHEIGHT; y++)
+	{
+		g_tilemap.Get((MAPWIDTH / 2) - 1, y, 1) = 12;
+	}
+	g_tilemap.Get((MAPWIDTH / 20) - 1, 2, 1) = -1;
+	g_tilemap.Get((MAPWIDTH / 20) - 1, 6, 1) = -1;
+
+
+	bool quit = false;
+	SDL_Event event;
+
+	while (!quit)
+	{
+		while (SDL_PollEvent(&event))
+		{
+			if (event.type == SDL_EVENT_QUIT)
+			{
+				quit = true;
+			}
+			if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
+			{
+				quit = true;
+			}
+
+
+		}
+
+		// Render stuff
+
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 250); // Clear to black
+		SDL_RenderClear(renderer);
+
+		DrawTilemap(renderer, 0, 0);
+
+		SDL_RenderPresent(renderer);
+
+	}
+
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+
+	return 0;
 }
