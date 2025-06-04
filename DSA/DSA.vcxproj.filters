@@ -26,6 +26,9 @@
     <ClInclude Include="Bitvector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Linked Lists.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL3.dll" />

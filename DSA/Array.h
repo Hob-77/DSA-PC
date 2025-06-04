@@ -1,3 +1,4 @@
+#pragma once
 
 template<class Datatype>
 class Array
