@@ -138,6 +138,8 @@
   <ItemGroup>
     <ClInclude Include="Array.h" />
     <ClInclude Include="Bitvector.h" />
+    <ClInclude Include="Queues.h" />
+    <ClInclude Include="Stack.h" />
     <ClInclude Include="Linked Lists.h" />
   </ItemGroup>
   <ItemGroup>

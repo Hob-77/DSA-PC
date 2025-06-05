@@ -8,9 +8,24 @@
 #include "Array.h"
 #include "Bitvector.h"
 #include "Linked Lists.h"
+#include "Stack.h"
 
 const int WINDOWWIDTH{ 1024 };
 const int WINDOWHEIGHT{ 768 };
+
+class Menu
+{
+public:
+	const char* m_options[3];
+	int m_optionSpawns[3];
+	int m_x;
+	int m_y;
+	int m_w;
+	int m_h;
+	SDL_Color m_color;
+};
+
+const SDL_Color LTGREY = { 192,192,192,255 }; // light grey
 
 int main(int argc, char* argv[])
 {
@@ -40,26 +55,31 @@ int main(int argc, char* argv[])
 	// Enable vsync
 	SDL_SetRenderVSync(renderer, 1);
 
+	Array<Menu> g_menus(10);
+	AStack<Menu*> g_stack(3);
+	g_stack.Push(&(g_menus[0]));
+	// main menu
+	g_menus[0].m_options[0] = "1 - Sound";
+	g_menus[0].m_optionSpawns[0] = 1;
+	g_menus[0].m_options[1] = "2 - Graphics";
+	g_menus[0].m_optionSpawns[1] = 2;
+	g_menus[0].m_options[2] = "3 - Controls";
+	g_menus[0].m_optionSpawns[2] = 3;
+	g_menus[0].m_x = 16;
+	g_menus[0].m_y = 16;
+	g_menus[0].m_w = 768;
+	g_menus[0].m_color = LTGREY;
 
-	// Creating Linked list
-	SListNode<int>* list = new SListNode<int>;
-	list->m_data = 10;
-	// insert 30 and then 20 before that, so the list is 10,20,30.
-	list->InsertAfter(30);
-	list->InsertAfter(20);
-	std::cout << "the list contains: ";
-	// create a new iterator and make it point to the beginning of the list.
-	SListNode<int>* itr = list;
-	std::cout << itr->m_data << ", ";
-	// move the iterator to the next node in the list.
-	itr = itr->m_next;
-	std::cout << itr->m_data << ", ";
-	// move the iterator forward again.
-	itr = itr->m_next;
-	std::cout << itr->m_data << ". ";
-	// reset the iterator to the beginning again.
-	itr = list;
+	int x = g_stack.Top()->m_optionSpawns[0];
+	if (x != 0)
+	{
+		g_stack.Push(&g_menus[x]);
+	}
 
+	if (g_stack.Top() != &g_menus[0])
+	{
+		g_stack.Pop();
+	}
 
 	bool quit = false;
 	SDL_Event event;
