@@ -1,63 +1,54 @@
 #pragma once
 
-template<class Datatype> class SDListNode;
-template<class Datatype> class SDLinkedList;
-template<class Datatype> class SDListIterator;
-
 template<class Datatype>
-class SDListNode
+class SListNode
 {
 public:
 	Datatype m_data;
-	SDListNode<Datatype>* m_next;
-	SDListNode<Datatype>* m_prev;
+	SListNode<Datatype>* m_next;
 
 	void InsertAfter(Datatype p_data)
 	{
-		// create the new node.
-		SDListNode<Datatype>* newnode = new SDListNode<Datatype>;
+		// create the new node
+		SListNode<Datatype>* newnode = new SListNode<Datatype>;
 		newnode->m_data = p_data;
 		// make the new node point to the next node.
 		newnode->m_next = m_next;
 		// make the previous node point to the new node
-		newnode->m_prev = this;
-
-		if (m_next != nullptr)
-		{
-			m_next->m_prev = newnode;
-		}
 		m_next = newnode;
 	}
-
 };
 
 template<class Datatype>
-class SDLinkedList
+class SListIterator;
+
+template<class Datatype>
+class SLinkedList
 {
 public:
-	SDListNode<Datatype>* m_head;
-	SDListNode<Datatype>* m_tail;
+	SListNode<Datatype>* m_head;
+	SListNode<Datatype>* m_tail;
 	int m_count;
 
-	SDLinkedList()
+	SLinkedList()
 	{
 		m_head = 0;
 		m_tail = 0;
 		m_count = 0;
 	}
 
-	~SDLinkedList()
+	~SLinkedList()
 	{
 		// temporary node pointers.
-		SDListNode<Datatype>* itr = m_head;
-		SDListNode<Datatype>* next;
+		SListNode<Datatype>* itr = m_head;
+		SListNode<Datatype>* next;
 		while (itr != 0)
 		{
 			// save the pointer to the next node.
 			next = itr->m_next;
 			// delete the current node.
 			delete itr;
-			// make the next node the current node.
+			// make teh next node the current node.
 			itr = next;
 		}
 	}
@@ -66,15 +57,13 @@ public:
 	{
 		if (m_head == 0)
 		{
-			// create a new head node.
-			m_head = m_tail = new SDListNode<Datatype>;
+			// create a new head node
+			m_head = m_tail = new SListNode<Datatype>;
 			m_head->m_data = p_data;
-			m_head->m_next = nullptr;
-			m_head->m_prev = nullptr;
 		}
 		else
 		{
-			// insert a new node
+			// insert a new node after the tail and reset the tail
 			m_tail->InsertAfter(p_data);
 			m_tail = m_tail->m_next;
 		}
@@ -84,16 +73,9 @@ public:
 	void Prepend(Datatype p_data)
 	{
 		// create the new node.
-		SDListNode<Datatype>* newnode = new SDListNode<Datatype>;
+		SListNode<Datatype>* newnode = new SListNode<Datatype>;
 		newnode->m_data = p_data;
 		newnode->m_next = m_head;
-		newnode->m_prev = nullptr;
-
-		if (m_head != nullptr)
-		{
-			m_head->m_prev = newnode;
-		}
-
 		// set the head node and the tail node if needed.
 		m_head = newnode;
 		if (m_tail == 0)
@@ -105,23 +87,19 @@ public:
 
 	void RemoveHead()
 	{
-		SDListNode<Datatype>* node = nullptr;
-		if (m_head != nullptr)
+		SListNode<Datatype>* node = 0;
+		if (m_head != 0)
 		{
 			// make node point to the next node.
 			node = m_head->m_next;
-			// then delete the head and make the pointer
-			// point to node.
+			// then delete the ehad and make the pointer
+			// point to the node.
 			delete m_head;
 			m_head = node;
-
-			if (m_head != nullptr)
+			// if the head is null, than you've just deleted the only node in the list. set the tail to 0.
+			if (m_head == 0)
 			{
-				m_head->m_prev = nullptr;
-			}
-			else
-			{
-				m_tail = nullptr;
+				m_tail = 0;
 			}
 			m_count--;
 		}
@@ -129,10 +107,11 @@ public:
 
 	void RemoveTail()
 	{
+		SListNode<Datatype>* node = m_head;
 		// if the list isn't empty, then remove a node.
-		if (m_tail != 0)
+		if (m_head != 0)
 		{
-			// if the head is equal to the tail, then the list has 1 node
+			// if the head is equal to the tail, then the list has 1 node, and you are removing it.
 			if (m_head == m_tail)
 			{
 				// delete the node and set both pointers to 0.
@@ -141,25 +120,24 @@ public:
 			}
 			else
 			{
-				// With doubly linked list, we can directly access previous node!
-				SDListNode<Datatype>* node = m_tail->m_prev;
-				delete m_tail;
+				// skip ahead until you find the node right before the tail node
+				while (node->m_next != m_tail)
+				{
+					node = node->m_next;
+				}
+				// make the tail point to the node before the current tail and delete the old tail.
 				m_tail = node;
-				m_tail->m_next = 0;
+				delete node->m_next;
+				node->m_next = 0;
 			}
 			m_count--;
 		}
 	}
 
-	SDListIterator<Datatype> GetIterator()
-	{
-		return SDListIterator<Datatype>(this, m_head);
-	}
-
 	// inserts an item after the current iterator or appends data if iterator is invalid.
-	void Insert(SDListIterator<Datatype>& p_iterator, Datatype p_data)
+	void Insert(SListIterator<Datatype>& p_iterator, Datatype p_data)
 	{
-		// if the iterator doesn't belong to this list, do nothing.
+		// if the iterator doesn’t belong to this list, do nothing. 
 		if (p_iterator.m_list != this)
 		{
 			return;
@@ -168,7 +146,9 @@ public:
 		{
 			// if the iterator is valid, then insert the node
 			p_iterator.m_node->InsertAfter(p_data);
-			// if the iterator is the tail node, then update the tail pointer to point ot the new node.
+			// if the iterator is the tail node, then
+			// update the tail pointer to point to the
+			// new node.
 			if (p_iterator.m_node == m_tail)
 			{
 				m_tail = p_iterator.m_node->m_next;
@@ -182,36 +162,58 @@ public:
 		}
 	}
 
-	void Remove(SDListIterator<Datatype>& p_iterator)
+	void Remove(SListIterator<Datatype>& p_iterator)
 	{
-		if (p_iterator.m_list != this || p_iterator.m_node == 0)
+		SListNode<Datatype>* node = m_head;
+		// if the iterator doesn’t belong to this list, do nothing.
+		if (p_iterator.m_list != this)
+		{
 			return;
-
-		SDListNode<Datatype>* node = p_iterator.m_node;
-
-		// Move iterator forward before removing
-		p_iterator.Forth();
-
-		// Update the previous node's next pointer
-		if (node->m_prev != nullptr)
-			node->m_prev->m_next = node->m_next;
+		}
+		// if node is invalid, do nothing.
+		if (p_iterator.m_node == 0)
+		{
+			return;
+		}
+		if (p_iterator.m_node == m_head)
+		{
+			// move the iterator forward and delete the head.
+			p_iterator.Forth();
+			RemoveHead();
+		}
 		else
-			m_head = node->m_next;  // We're removing the head
-
-		// Update the next node's prev pointer
-		if (node->m_next != nullptr)
-			node->m_next->m_prev = node->m_prev;
-		else
-			m_tail = node->m_prev;  // We're removing the tail
-
-		delete node;
+		{
+			// scan forward through the list until you find 
+		   // the node prior to the node you want to remove 
+			while (node->m_next != p_iterator.m_node)
+			{
+				node = node->m_next;
+			}
+			// move the iterator forward. 
+			p_iterator.Forth();
+			// if the node you are deleting is the tail, 
+			// update the tail node. 
+			if (node->m_next == m_tail)
+			{
+				m_tail = node;
+			}
+			// delete the node.
+			delete node->m_next;
+			// re-link the list.
+			node->m_next = p_iterator.m_node;
+		}
 		m_count--;
+	}
+
+	SListIterator<Datatype> GetIterator()
+	{
+		return SListIterator<Datatype>(this, m_head);
 	}
 
 	bool SaveToDisk(char* p_filename)
 	{
 		FILE* outfile = 0;
-		SDListNode<Datatype>* itr = m_head;
+		SListNode* itr = m_head;
 		outfile = fopen(p_filename, "wb");
 		if (outfile == 0)
 		{
@@ -251,13 +253,13 @@ public:
 };
 
 template<class Datatype>
-class SDListIterator
+class SListIterator
 {
 public:
-	SDListNode<Datatype>* m_node;
-	SDLinkedList<Datatype>* m_list;
+	SListNode<Datatype>* m_node;
+	SLinkedList<Datatype>* m_list;
 
-	SDListIterator(SDLinkedList<Datatype>* p_list = 0, SDListNode<Datatype>* p_node = 0)
+	SListIterator(SLinkedList<Datatype>* p_list = 0, SListNode<Datatype>* p_node = 0)
 	{
 		m_list = p_list;
 		m_node = p_node;
@@ -287,22 +289,6 @@ public:
 	bool Valid()
 	{
 		return (m_node != 0);
-	}
-
-	void Back()
-	{
-		if (m_node != 0)
-		{
-			m_node = m_node->m_prev;
-		}
-	}
-	
-	void End()
-	{
-		if (m_list != 0)
-		{
-			m_node = m_list->m_tail;
-		}
 	}
 
 };

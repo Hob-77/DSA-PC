@@ -1,45 +1,39 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
-#include <algorithm>
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
+
 #include <SDL3/SDL.h>
+#include <glad/glad.h>
+
 #include "Array.h"
 #include "Bitvector.h"
-#include "Linked Lists.h"
+#include "LinkedLists.h"
+#include "DLinkedLists.h"
 #include "Stack.h"
+#include "Queue.h"
+#include "HashTable.h"
 
-const int WINDOWWIDTH{ 1024 };
-const int WINDOWHEIGHT{ 768 };
-
-class Menu
-{
-public:
-	const char* m_options[3];
-	int m_optionSpawns[3];
-	int m_x;
-	int m_y;
-	int m_w;
-	int m_h;
-	SDL_Color m_color;
-};
-
-const SDL_Color LTGREY = { 192,192,192,255 }; // light grey
+const int WINDOWWIDTH{ 1920 };
+const int WINDOWHEIGHT{ 1080 };
 
 int main(int argc, char* argv[])
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
 	{
 		std::cerr << "Failed to init SDL: " << SDL_GetError() << "\n";
 		return -1;
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
 	SDL_Window* window = SDL_CreateWindow(
-		"DSA",
+		"DSA, SDL3 and OpenGL 4.6",
 		WINDOWWIDTH,
 		WINDOWHEIGHT,
-		SDL_WINDOW_RESIZABLE
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
 
 	if (!window)
@@ -49,37 +43,32 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	// Create renderer
-	SDL_Renderer* renderer = SDL_CreateRenderer(window,NULL);
-
-	// Enable vsync
-	SDL_SetRenderVSync(renderer, 1);
-
-	Array<Menu> g_menus(10);
-	AStack<Menu*> g_stack(3);
-	g_stack.Push(&(g_menus[0]));
-	// main menu
-	g_menus[0].m_options[0] = "1 - Sound";
-	g_menus[0].m_optionSpawns[0] = 1;
-	g_menus[0].m_options[1] = "2 - Graphics";
-	g_menus[0].m_optionSpawns[1] = 2;
-	g_menus[0].m_options[2] = "3 - Controls";
-	g_menus[0].m_optionSpawns[2] = 3;
-	g_menus[0].m_x = 16;
-	g_menus[0].m_y = 16;
-	g_menus[0].m_w = 768;
-	g_menus[0].m_color = LTGREY;
-
-	int x = g_stack.Top()->m_optionSpawns[0];
-	if (x != 0)
+	SDL_GLContext glContext = SDL_GL_CreateContext(window);
+	if (!glContext) 
 	{
-		g_stack.Push(&g_menus[x]);
+		std::cerr << "Failed to create OpenGL context: " << SDL_GetError() << "\n";
+		SDL_DestroyWindow(window);
+		SDL_Quit();
+		return -1;
 	}
 
-	if (g_stack.Top() != &g_menus[0])
+	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) 
 	{
-		g_stack.Pop();
+		std::cerr << "Failed to initialize GLAD\n";
+		SDL_GL_DestroyContext(glContext);
+		SDL_DestroyWindow(window);
+		SDL_Quit();
+		return -1;
 	}
+
+	printf("OpenLGL Version: %s\n", glGetString(GL_VERSION));
+	printf("GLSL Version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+	// Enable V-Sync
+	SDL_GL_SetSwapInterval(1);
+
+	glViewport(0, 0, WINDOWWIDTH, WINDOWHEIGHT);
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 	bool quit = false;
 	SDL_Event event;
@@ -99,18 +88,21 @@ int main(int argc, char* argv[])
 				quit = true;
 			}
 
-
+			if (event.type == SDL_EVENT_WINDOW_RESIZED)
+			{
+				int newWidth = event.window.data1;
+				int newHeight = event.window.data2;
+				glViewport(0, 0, newWidth, newHeight);
+			}
 		}
 
-		// Render stuff
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 250); // Clear to black
-		SDL_RenderClear(renderer);
+		// Render
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-		SDL_RenderPresent(renderer);
-
+		SDL_GL_SwapWindow(window);
 	}
 
+	SDL_GL_DestroyContext(glContext);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 

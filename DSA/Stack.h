@@ -1,6 +1,33 @@
 #pragma once
+#include "DLinkedLists.h"
 #include "Array.h"
-#include "Linked Lists.h"
+
+template<class Datatype>
+class Lstack : public DLinkedList<Datatype>
+{
+public:
+
+	void Push(Datatype p_data)
+	{
+		Append(p_data);
+	}
+
+	void Pop()
+	{
+		RemoveTail();
+	}
+
+	Datatype Top()
+	{
+		return m_tail->m_data;
+	}
+
+	int Count()
+	{
+		return m_count;
+	}
+
+};
 
 template<class Datatype>
 class AStack : public Array<Datatype>
@@ -15,9 +42,9 @@ public:
 
 	bool Push(Datatype p_data)
 	{
-		if (this->m_size != m_top)
+		if (m_size != m_top)
 		{
-			this->m_array[m_top] = p_data;
+			m_array[m_top] = p_data;
 			m_top++;
 			return true;
 		}
@@ -34,37 +61,12 @@ public:
 
 	Datatype Top()
 	{
-		return this->m_array[m_top - 1];
+		return m_array[m_top - 1];
 	}
 
 	int Count()
 	{
 		return m_top;
 	}
-};
 
-template<class Datatype>
-class LStack : public SDLinkedList<Datatype>
-{
-public:
-
-	void Push(Datatype p_data)
-	{
-		this->Append(p_data);
-	}
-
-	void Pop()
-	{
-		this->RemoveTail();
-	}
-
-	Datatype Top()
-	{
-		return this->m_tail->m_data;
-	}
-
-	int Count()
-	{
-		return this->m_count;
-	}
 };

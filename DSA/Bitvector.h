@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdio>
+#include <cstdint>
+#include <cstdlib>
+
 class Bitvector
 {
 public:
@@ -140,4 +144,5 @@ public:
 		}
 		return true;
 	}
+
 };
