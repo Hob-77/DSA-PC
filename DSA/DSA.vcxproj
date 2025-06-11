@@ -142,6 +142,8 @@
   <ItemGroup>
     <ClInclude Include="Array.h" />
     <ClInclude Include="Bitvector.h" />
+    <ClInclude Include="DLinkedList.h" />
+    <ClInclude Include="LinkedList.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL3.dll" />
